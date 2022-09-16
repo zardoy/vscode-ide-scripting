@@ -70,5 +70,8 @@ vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then((files) => {
 
 ## Some More Screenshots
 
-![screenshot-1](resources/screenshot-1.png)
-![screenshot-2](resources/screenshot-2.png)
+![screenshot-1](assets/screenshot-1.png)
+
+---
+
+![screenshot-2](assets/screenshot-2.png)
