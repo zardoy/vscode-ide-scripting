@@ -1,0 +1,98 @@
+{
+    "name": "ide-scripting",
+    "displayName": "IDE Scripting",
+    "description": "True scripting using full VSCode API !",
+    "publisher": "zardoy",
+    "version": "0.0.0-dev",
+    "license": "MIT",
+    "categories": [
+        "Other"
+    ],
+    "contributes": {
+        "commands": [
+            {
+                "command": "openPlayground",
+                "title": "Open Playground..."
+            },
+            {
+                "command": "openLastPlayground",
+                "title": "Open Last Playground"
+            },
+            {
+                "command": "executeScript",
+                "title": "Execute Playground Script",
+                "icon": "$(play)"
+            },
+            {
+                "command": "disposeDisposables",
+                "title": "Dispose Disposables"
+            },
+            {
+                "command": "disposeSelected",
+                "title": "Show and Select Disposables"
+            },
+            {
+                "command": "focusOutput",
+                "title": "Focus Output"
+            },
+            {
+                "command": "installMissingPackages",
+                "title": "Install Missing Packages"
+            }
+        ],
+        "typescriptServerPlugins": [
+            {
+                "name": "vscode-ide-scripting-typescript-plugin",
+                "enableForWorkspaceTypeScriptVersions": true
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "when": "resourceScheme == ideScripting.playground",
+                    "group": "navigation",
+                    "command": "executeScript"
+                }
+            ]
+        }
+    },
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": false,
+            "description": "Uses npm/pnpm and esbuild executables"
+        }
+    },
+    "activationEvents": [
+        "onStartupFinished",
+        "onCommands"
+    ],
+    "scripts": {
+        "start": "vscode-framework start",
+        "build": "vscode-framework build && node buildTsPlugin.mjs prod && node scripts/buildExtension.mjs",
+        "watch-plugin": "node buildTsPlugin.mjs",
+        "postinstall": "patch-package"
+    },
+    "devDependencies": {
+        "@types/semver": "^7.3.12",
+        "@types/vscode": "^1.71.0",
+        "@zardoy/tsconfig": "^1.5.0",
+        "@zardoy/vscode-utils": "^0.0.28",
+        "semver": "^7.3.7",
+        "typescript": "^4.8.2",
+        "vscode-framework": "^0.0.18"
+    },
+    "dependencies": {
+        "@milahu/patch-package-with-pnpm-support": "^6.4.8",
+        "@types/adm-zip": "^0.5.0",
+        "@types/node": "^18.7.14",
+        "@zardoy/utils": "^0.0.9",
+        "adm-zip": "^0.5.9",
+        "esbuild": "^0.15.7",
+        "modify-json-file": "^1.2.2",
+        "rambda": "^7.2.1",
+        "require-from-string": "^2.0.2",
+        "typed-jsonfile": "^0.2.1",
+        "vsce": "microsoft/vscode-vsce",
+        "vscode-latest": "npm:@types/vscode@^1.71.0"
+    }
+}

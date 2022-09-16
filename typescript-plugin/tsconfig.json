@@ -1,0 +1,17 @@
+{
+    "extends": "@zardoy/tsconfig/node",
+    "compilerOptions": {
+        "noEmit": false,
+        "rootDir": "src",
+        "sourceMap": true,
+        "outDir": "build",
+        "lib": [
+            "ESNext",
+            "Webworker",
+            "Webworker.Iterable"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}

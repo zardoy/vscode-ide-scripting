@@ -1,0 +1,5 @@
+{
+    "name": "vscode-ide-scripting-typescript-plugin",
+    "version": "0.0.1",
+    "main": "build/index.js"
+}
