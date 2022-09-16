@@ -12,8 +12,7 @@ const catchFn = process.env.CI
 await modifyJsonFile(
     './out/package.json',
     {
-        // vscodeTypesVersion: (await readPackageJsonFile({ dir: './node_modules/vscode-latest' }).catch(catchFn))?.version,
-        vscodeTypesVersion: '1.69.0',
+        vscodeTypesVersion: (await readPackageJsonFile({ dir: './node_modules/vscode-latest' }).catch(catchFn))?.version,
     },
     { ifPropertyIsMissing: 'add' },
 )

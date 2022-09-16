@@ -23,7 +23,9 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 ourFileRoot = openedFile.slice(0, beforeRootIdx)
                 break
             }
-            if (!ourFileRoot || info.languageServiceHost.getCurrentDirectory().toLowerCase() !== ourFileRoot) {
+            let currentRoot = info.languageServiceHost.getCurrentDirectory().toLowerCase()
+            if (currentRoot === '/') currentRoot = ''
+            if (ourFileRoot === undefined || currentRoot !== ourFileRoot) {
                 return
             }
             console.log('ide scripting plugin activated')
