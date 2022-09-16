@@ -88,6 +88,8 @@
         "@zardoy/utils": "^0.0.9",
         "adm-zip": "^0.5.9",
         "esbuild": "^0.15.7",
+        "got": "^12.4.1",
+        "is-running": "^2.1.0",
         "modify-json-file": "^1.2.2",
         "rambda": "^7.2.1",
         "require-from-string": "^2.0.2",

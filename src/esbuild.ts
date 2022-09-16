@@ -3,6 +3,11 @@ import os from 'os'
 import fs from 'fs'
 import https from 'https'
 import { join } from 'path'
+import { GracefulCommandError } from 'vscode-framework'
+import isRunning from 'is-running'
+import util from 'util'
+import stream from 'stream'
+import got, { Progress } from 'got'
 
 const knownWindowsPackages: Record<string, string> = {
     'win32 arm64 LE': 'esbuild-windows-arm64',
@@ -55,24 +60,65 @@ const getEsbuildDownloadLink = (platformKey?: string) => {
 }
 
 const esbuildPath = join(__dirname, 'esbuild')
+const lockedPidFile = join(__dirname, 'lockedPid')
 
-const hasEsbuild = () => fs.existsSync(esbuildPath)
+const hasEsbuild = () => {
+    try {
+        const stat = fs.statSync(esbuildPath)
+        if (stat.size < 1000) return false
+        return true
+    } catch {
+        return false
+    }
+}
+const readLockFileSafe = () => {
+    try {
+        return fs.readFileSync(lockedPidFile, 'utf8')
+    } catch (err) {
+        return
+    }
+}
+const isAnotherInstanceAlreadyInstalling = () => {
+    const lockedPid = readLockFileSafe()
+    if (lockedPid && isRunning(+lockedPid)) {
+        return true
+    }
+    fs.writeFileSync(lockedPidFile, String(process.pid), 'utf8')
+    return false
+}
 
-export const installEsbuild = async () => {
+const installEsbuildInner = async () => {
     if (hasEsbuild()) return
+    // when extension is installed in one window it becomes enabled in all opened windows
+    // so we need to ensure we don't call this and installing esbuild only in one instance
+    // by this we ensure installing doesn't happen in another instances
+    if (isAnotherInstanceAlreadyInstalling()) return
+    const pipeline = util.promisify(stream.pipeline)
 
-    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'First time esbuild install' }, async () => {
+    const title = 'First time esbuild install'
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title }, async progress => {
         const esbuildDownloadLink = getEsbuildDownloadLink()
-        const file = fs.createWriteStream('./esbuild')
-        await new Promise<void>(resolve => {
-            console.log('Downloading esbuild from', esbuildDownloadLink)
-            https.get(esbuildDownloadLink, res => {
-                res.pipe(file)
-
-                file.on('finish', () => {
-                    file.close(() => resolve())
+        console.log('Downloading esbuild from', esbuildDownloadLink)
+        try {
+            fs.unlinkSync(esbuildPath)
+        } catch {}
+        await pipeline(
+            got.stream(esbuildDownloadLink).on('downloadProgress', (downloadProgress: Progress) => {
+                progress.report({
+                    message: `${title} (Downloading: ${downloadProgress.percent * 100}%)`,
                 })
-            })
-        })
+            }),
+            fs.createWriteStream(esbuildPath),
+        )
+        if (process.platform !== 'win32') fs.chmodSync(esbuildPath, 0o755)
+        fs.unlinkSync(lockedPidFile)
+    })
+}
+
+export const installEsbuild = () => {
+    installEsbuildInner().catch(async err => {
+        fs.unlinkSync(lockedPidFile)
+        const choice = await vscode.window.showErrorMessage(`Failed to install esbuild: ${err.message}`, 'Retry')
+        if (choice) installEsbuild()
     })
 }
