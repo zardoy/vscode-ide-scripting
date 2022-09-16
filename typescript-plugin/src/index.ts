@@ -14,10 +14,19 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
         create(info: ts.server.PluginCreateInfo) {
             if (info.project.projectKind !== ts.server.ProjectKind.Inferred) return
             const openedFiles = [...(info.project.projectService.openFiles.keys() as any)] as string[]
-            // don't add globals such as code to untitled and other inferred projects
-            if (info.languageServiceHost.getCurrentDirectory() !== '/' || !openedFiles.some(file => file.startsWith('/^/idescripting.playground/'))) {
+            // don't add globals such as code to untitled and other inferred/full projects
+            let ourFileRoot: string | undefined
+            for (const openedFile of openedFiles) {
+                // TODO inspectpostf
+                const beforeRootIdx = openedFile.indexOf('/^/idescripting.playground/')
+                if (beforeRootIdx === -1) continue
+                ourFileRoot = openedFile.slice(0, beforeRootIdx)
+                break
+            }
+            if (!ourFileRoot || info.languageServiceHost.getCurrentDirectory().toLowerCase() !== ourFileRoot) {
                 return
             }
+            console.log('ide scripting plugin activated')
             // in our inferred project
             let isInPlayground = true
             const apiFileName = '^/ideScripting.playground/ts-nul-authority/__virtual-vscode-api.ts'
