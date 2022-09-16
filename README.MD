@@ -67,3 +67,8 @@ vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then((files) => {
 ### Notes
 
 - if there is no note in changelog/releases about specific/latest extension version it means it was released automatically to keep vscode typings in your playground up to date
+
+## Some More Screenshots
+
+![screenshot-1](resources/screenshot-1.png)
+![screenshot-2](resources/screenshot-2.png)
