@@ -59,7 +59,7 @@ const getEsbuildDownloadLink = (platformKey?: string) => {
     return subpath.endsWith('.exe') ? `https://unpkg.com/${pkg}/${subpath}` : `https://cdn.jsdelivr.net/npm/${pkg}/${subpath}`
 }
 
-const esbuildPath = join(__dirname, 'esbuild')
+const esbuildPath = join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')
 const lockedPidFile = join(__dirname, 'lockedPid')
 
 const hasEsbuild = () => {
@@ -110,7 +110,8 @@ const installEsbuildInner = async () => {
             }),
             fs.createWriteStream(esbuildPath),
         )
-        if (process.platform !== 'win32') fs.chmodSync(esbuildPath, 0o755)
+        // if (process.platform !== 'win32') fs.chmodSync(esbuildPath, 0o755)
+        fs.chmodSync(esbuildPath, 493)
         fs.unlinkSync(lockedPidFile)
     })
 }
