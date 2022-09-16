@@ -7,7 +7,7 @@ patchPackageJson({})
 module.exports = defineConfig({
     esbuild: {
         banner: {
-            js: `const __ESBUILD_BINARY_PATH = require('path').join(__dirname, 'esbuild')`,
+            js: `const __ESBUILD_BINARY_PATH = require('path').join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')`,
         },
         // @ts-ignore
         define: {
