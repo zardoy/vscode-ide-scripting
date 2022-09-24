@@ -28,6 +28,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             if (ourFileRoot === undefined || currentRoot !== ourFileRoot) {
                 return
             }
+            _configuration = info.config
             console.log('ide scripting plugin activated')
             // in our inferred project
             let isInPlayground = true

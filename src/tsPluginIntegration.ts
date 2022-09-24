@@ -70,47 +70,4 @@ export default async () => {
         targetVisibleEditorsNum = newNum
         if (isChanged) syncConfig()
     })
-
-    let tsRestarts = 0
-
-    let firstCheck = true
-    const restartTsServer = async () => {
-        console.debug('restarting ts server, as plugin received no configuration')
-        tsRestarts++
-        if (tsRestarts > 2) {
-            // avoid spamming
-            if (tsRestarts > 3) return
-            vscode.window.showErrorMessage("There is a problem with with TypeScript plugin as it can't be configured properly")
-            return
-        }
-        await vscode.commands.executeCommand('typescript.restartTsServer')
-        firstCheck = true
-        checkPluginNeedsConfig()
-    }
-
-    const checkPluginNeedsConfig = async (uri?: vscode.Uri) => {
-        if (uri?.scheme !== SCHEME) return
-        if (firstCheck) {
-            await new Promise(resolve => {
-                setTimeout(resolve, 600)
-            })
-        }
-        firstCheck = false
-        // console.time('check plugin')
-        const { body: result } = (await vscode.commands.executeCommand('typescript.tsserverRequest', 'semanticDiagnosticsSync', {
-            _: '%%%',
-            file: `^/ideScripting.playground/ts-nul-authority/${uri.path}`,
-        })) as any
-        // console.timeEnd('check plugin')
-        if (result?.find(({ text }) => text === 'no-plugin-configuration')) {
-            // plugin not feeling good today, lets help him
-            await restartTsServer()
-        }
-    }
-
-    vscode.window.onDidChangeActiveTextEditor(textEditor => {
-        checkPluginNeedsConfig(textEditor?.document.uri)
-    })
-
-    checkPluginNeedsConfig(vscode.window.activeTextEditor?.document.uri)
 }
