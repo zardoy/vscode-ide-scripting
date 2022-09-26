@@ -7,19 +7,22 @@ import { SCHEME } from './fileSystem'
 import { join } from 'path'
 import { globalNodeModulesRoot } from './tsPluginIntegration'
 import { Utils } from 'vscode-uri'
+import { dirname } from 'path/posix'
 
 export default () => {
     let prevRegisteredCommand: vscode.Disposable[] | undefined
 
-    type EsbuildOptionsExec = BuildOptions & {
+    type AdditionalExecOptions = {
         injectScript?: string
+        __filename?: string
     }
 
     const executeScriptHandler = async (
         _,
         playgroundScriptArg?: string | vscode.Uri | null,
         targetEditorUriArg?: vscode.Uri | null,
-        esbuildOptionsArg: EsbuildOptionsExec = {},
+        esbuildOptionsArg: BuildOptions = {},
+        additionalOptions: AdditionalExecOptions = {},
     ) => {
         if (!(targetEditorUriArg instanceof vscode.Uri)) targetEditorUriArg = undefined
         const { visibleTextEditors } = vscode.window
@@ -45,7 +48,7 @@ export default () => {
         }
 
         // the possibilities of this pattern should be insane
-        let injectScript = esbuildOptionsArg?.injectScript
+        let { injectScript, __filename } = additionalOptions
         if (injectScript === undefined) {
             // TODO change to require once!
             const fs = await import('fs')
@@ -58,6 +61,10 @@ export default () => {
                 .map(alias => `const ${alias} = vscode`)
                 .join('\n')
         })
+
+        if (__filename) {
+            injectScript = `__filename = "${__filename}"\n__dirname = "${dirname(__filename)}"\n\n${injectScript}`
+        }
 
         const esbuildBuildOptions = getExtensionSetting('esbuildBuildOptions')
         const userCodeToBundle = playgroundScriptContents ?? playgroundEditor!.document.getText()
@@ -134,7 +141,8 @@ export default () => {
         const { activeTextEditor } = vscode.window
         const { scheme } = activeTextEditor!?.document.uri
         if (!activeTextEditor || ['output'].includes(scheme)) return
-        let fileDir = ['file'].includes(scheme) ? Utils.dirname(activeTextEditor.document.uri) : undefined
+        const filePath = ['file'].includes(scheme) ? activeTextEditor.document.uri : undefined
+        let fileDir = filePath ? Utils.dirname(filePath) : undefined
         const firstWorkspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri
         if (scheme === 'untitled' && firstWorkspaceFolder) fileDir = firstWorkspaceFolder
         await vscode.commands.executeCommand(
@@ -148,6 +156,9 @@ export default () => {
                       },
                   }
                 : undefined,
+            {
+                __filename: filePath?.fsPath,
+            },
         )
     })
 }
