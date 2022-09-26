@@ -38,6 +38,10 @@
             {
                 "command": "installMissingPackages",
                 "title": "Install Missing Packages"
+            },
+            {
+                "command": "executeScriptFromCurrentEditor",
+                "title": "Execute Script From Current Editor"
             }
         ],
         "typescriptServerPlugins": [
@@ -95,6 +99,7 @@
         "require-from-string": "^2.0.2",
         "typed-jsonfile": "^0.2.1",
         "vsce": "microsoft/vscode-vsce",
-        "vscode-latest": "npm:@types/vscode@^1.71.0"
+        "vscode-latest": "npm:@types/vscode@^1.71.0",
+        "vscode-uri": "^3.0.6"
     }
 }

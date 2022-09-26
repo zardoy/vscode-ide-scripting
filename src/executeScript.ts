@@ -2,15 +2,25 @@ import * as vscode from 'vscode'
 import { build, BuildOptions } from 'esbuild'
 import { partition, mergeDeepRight } from 'rambda'
 import requireFromString from 'require-from-string'
-import { registerExtensionCommand, getExtensionSetting, extensionCtx, getExtensionCommandId, showQuickPick } from 'vscode-framework'
+import { registerExtensionCommand, getExtensionSetting, extensionCtx, getExtensionCommandId, showQuickPick, GracefulCommandError } from 'vscode-framework'
 import { SCHEME } from './fileSystem'
 import { join } from 'path'
 import { globalNodeModulesRoot } from './tsPluginIntegration'
+import { Utils } from 'vscode-uri'
 
 export default () => {
     let prevRegisteredCommand: vscode.Disposable[] | undefined
 
-    registerExtensionCommand('executeScript', async (_, playgroundScriptArg?: string | vscode.Uri | null, targetEditorUriArg?: vscode.Uri | null) => {
+    type EsbuildOptionsExec = BuildOptions & {
+        injectScript?: string
+    }
+
+    const executeScriptHandler = async (
+        _,
+        playgroundScriptArg?: string | vscode.Uri | null,
+        targetEditorUriArg?: vscode.Uri | null,
+        esbuildOptionsArg: EsbuildOptionsExec = {},
+    ) => {
         if (!(targetEditorUriArg instanceof vscode.Uri)) targetEditorUriArg = undefined
         const { visibleTextEditors } = vscode.window
         let targetEditor: vscode.TextEditor | undefined
@@ -34,34 +44,39 @@ export default () => {
             }
         }
 
-        // TODO change to require once new framework is here
-        const fs = await import('fs')
-        const injectScriptSource = fs.readFileSync(join(__dirname, './resources/injectScript.js'), 'utf-8')
-        const injectScript = injectScriptSource
-            .replace('$TEXT_EDITOR_URI', targetEditor ? targetEditor.document.uri.toString() : '')
-            .replace("'$VSCODE_ALIASES'", () => {
-                return getExtensionSetting('vscodeAliases')
-                    .filter(a => a !== 'vscode')
-                    .map(alias => `const ${alias} = vscode`)
-                    .join('\n')
-            })
+        // the possibilities of this pattern should be insane
+        let injectScript = esbuildOptionsArg?.injectScript
+        if (injectScript === undefined) {
+            // TODO change to require once!
+            const fs = await import('fs')
+            injectScript = fs.readFileSync(join(__dirname, './resources/injectScript.js'), 'utf-8')
+        }
+
+        injectScript = injectScript.replace('$TEXT_EDITOR_URI', targetEditor ? targetEditor.document.uri.toString() : '').replace("'$VSCODE_ALIASES'", () => {
+            return getExtensionSetting('vscodeAliases')
+                .filter(a => a !== 'vscode')
+                .map(alias => `const ${alias} = vscode`)
+                .join('\n')
+        })
 
         const esbuildBuildOptions = getExtensionSetting('esbuildBuildOptions')
+        const userCodeToBundle = playgroundScriptContents ?? playgroundEditor!.document.getText()
         const buildResult = await build({
             ...mergeDeepRight(
                 {
                     bundle: true,
                     platform: process.env.PLATFORM === 'node' ? 'node' : 'browser',
                     format: 'cjs',
+                    external: ['vscode'],
                     stdin: {
-                        contents: playgroundScriptContents ?? playgroundEditor!.document.getText(),
+                        contents: injectScript + userCodeToBundle,
                         loader: 'tsx',
                         resolveDir: globalNodeModulesRoot ?? undefined,
                     },
                     write: false,
                     mainFields: ['module', 'main'],
                 } as BuildOptions,
-                esbuildBuildOptions,
+                { ...esbuildBuildOptions, ...esbuildOptionsArg },
             ),
         })
         if (buildResult.errors.length) {
@@ -79,7 +94,7 @@ export default () => {
         globalThis.__IDE_SCRIPTING_CONSOLE = console
         setImmediate(() => {
             try {
-                const executionResult: ExecutionResult = requireFromString(injectScript + buildScriptText)
+                const executionResult: ExecutionResult = requireFromString(buildScriptText)
                 vscode.Disposable.from(...(prevRegisteredCommand ?? [])).dispose()
                 registerExtensionCommand('disposeDisposables', () => {
                     vscode.Disposable.from(...executionResult.disposables.map(([disposable]) => disposable)).dispose()
@@ -105,6 +120,35 @@ export default () => {
             }
             // TODO create decoration
         })
+    }
+
+    registerExtensionCommand('executeScript', async (...args) => {
+        try {
+            await executeScriptHandler(...args)
+        } catch (err) {
+            throw new GracefulCommandError(err.message)
+        }
+    })
+
+    registerExtensionCommand('executeScriptFromCurrentEditor', async () => {
+        const { activeTextEditor } = vscode.window
+        const { scheme } = activeTextEditor!?.document.uri
+        if (!activeTextEditor || ['output'].includes(scheme)) return
+        let fileDir = ['file'].includes(scheme) ? Utils.dirname(activeTextEditor.document.uri) : undefined
+        const firstWorkspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri
+        if (scheme === 'untitled' && firstWorkspaceFolder) fileDir = firstWorkspaceFolder
+        await vscode.commands.executeCommand(
+            getExtensionCommandId('executeScript'),
+            activeTextEditor.document.getText(),
+            activeTextEditor.document.uri,
+            fileDir
+                ? {
+                      stdin: {
+                          resolveDir: fileDir.fsPath,
+                      },
+                  }
+                : undefined,
+        )
     })
 }
 
