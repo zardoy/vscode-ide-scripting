@@ -99,9 +99,15 @@ export default () => {
         const buildScriptText = buildResult.outputFiles[0]!.text
         // const buildLines = buildScriptText.split('\n')
         globalThis.__IDE_SCRIPTING_CONSOLE = console
+        const openConsole = getExtensionSetting('openOutputBeforeStart')
+        // todo ast detection
+        if ((openConsole === 'ifNeeded' && userCodeToBundle.includes('console.log')) || openConsole === 'always') {
+            console.show(true)
+        }
         setImmediate(() => {
             try {
-                const executionResult: ExecutionResult = requireFromString(buildScriptText)
+                const executionResult: ScriptResultExports = requireFromString(buildScriptText)
+                // if (!executionResult) return
                 vscode.Disposable.from(...(prevRegisteredCommand ?? [])).dispose()
                 registerExtensionCommand('disposeDisposables', () => {
                     vscode.Disposable.from(...executionResult.disposables.map(([disposable]) => disposable)).dispose()
@@ -163,6 +169,6 @@ export default () => {
     })
 }
 
-interface ExecutionResult {
+interface ScriptResultExports {
     disposables: [vscode.Disposable, string?][]
 }

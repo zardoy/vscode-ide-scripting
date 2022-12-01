@@ -28,6 +28,10 @@ export type Configuration = {
      */
     clearOutputBeforeStart: boolean
     /**
+     * @default ifNeeded
+     */
+    openOutputBeforeStart: 'never' | 'always' | 'ifNeeded'
+    /**
      * For advanced use cases.
      * Override esbuild options that are used when bundling on every script run
      */
