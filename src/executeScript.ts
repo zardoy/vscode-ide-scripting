@@ -41,7 +41,7 @@ export default () => {
             targetEditors = targetEditors.filter(({ document: { uri } }) => !['output'].includes(uri.scheme))
             if (playgroundEditors.length !== 1) throw new Error('One playground editor must be visible')
             playgroundEditor = playgroundEditors[0]!
-            targetEditor = targetEditors[0]!
+            targetEditor = targetEditors[0]
         } else {
             targetEditor = vscode.window.visibleTextEditors.find(({ document: { uri } }) => uri === targetEditorUriArg)!
             if (!targetEditor) throw new Error(`Can't find target editor from provided arg ${targetEditorUriArg.toString()}`)
