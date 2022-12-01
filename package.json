@@ -67,7 +67,6 @@
         }
     },
     "activationEvents": [
-        "onStartupFinished",
         "onFileSystem:ideScripting.playground",
         "onCommands"
     ],
