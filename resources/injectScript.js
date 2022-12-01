@@ -23,6 +23,7 @@ const info = (message, utilOptions) => vscode.window.showInformationMessage(__ut
 
 const pos = (...args) => new vscode.Position(...args)
 const range = (...args) => new vscode.Range(...args)
+const selection = (...args) => (typeof args[0] === 'object' ? new vscode.Selection(args[0].start, args[0].end) : new vscode.Selection(...args))
 
 const updateText = async (newText, replaceRange, _editor = editor) => {
     const { document } = _editor

@@ -24,6 +24,9 @@ declare const updateText: (newText: string, replaceRange?: import('vscode').Rang
 declare const pos: (start: number, end: number) => import('vscode').Position
 /** Shortcut for `new vscode.Range(...)` */
 declare const range: (line: import('vscode').Position, character: import('vscode').Position) => import('vscode').Range
+/** Shortcut for `new vscode.Selection(...)` */
+declare const selection: ((line: import('vscode').Position, character: import('vscode').Position) => import('vscode').Selection) &
+    ((range: import('vscode').Range) => import('vscode').Selection)
 
 /** Execute vscode command. Recommended alias for `vscode.commands.executeCommand` */
 declare const command: (commandId: string, ...args: any[]) => Promise<unknown>
