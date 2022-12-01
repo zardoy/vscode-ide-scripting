@@ -7,6 +7,7 @@ const __util = require('util')
 
 const currentEditor = vscode.window.activeTextEditor
 const editor = new Proxy(vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === '$TEXT_EDITOR_URI') ?? {}, {})
+const editorPos = editor.selection.active
 const doc = editor?.document
 const text = doc?.getText()
 const lines = doc?.getText().split(/\r?\n/g)
