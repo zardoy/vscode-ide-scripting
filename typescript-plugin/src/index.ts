@@ -90,6 +90,8 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 },
             })
 
+            const { languageService } = info
+
             const proxy: ts.LanguageService = Object.create(null)
 
             for (const k of Object.keys(info.languageService)) {
@@ -133,26 +135,60 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     })
                 return prior
             }
-            // TODO restore completion info detail
+            const getFirstAlias = () => {
+                if (_configuration?.vscodeNamespaceSuggestions !== 'useFirstAlias') return
+                return _configuration.vscodeAliases[0]
+            }
+
+            let vscodeExportNames: string[] = []
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
+                vscodeExportNames = []
                 const prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
                 if (!isInPlayground) return prior
                 if (!prior) return
-                if (_configuration?.vscodeNamespaceSuggestions === 'useFirstAlias') {
-                    const firstAlias = _configuration.vscodeAliases[0]
-                    if (firstAlias) {
-                        prior.entries = prior.entries.map(entry => {
-                            const importPackage = entry.sourceDisplay?.map(item => item.text).join('')
-                            if (importPackage !== 'vscode') return entry
-                            return {
-                                ...entry,
-                                insertText: `${firstAlias}.${entry.name}`,
-                                isSnippet: true,
-                                hasAction: undefined,
-                                source: undefined,
-                                data: undefined,
-                            }
-                        })
+                const firstAlias = getFirstAlias()
+                if (firstAlias) {
+                    prior.entries = prior.entries.map(entry => {
+                        const importPackage = entry.sourceDisplay?.map(item => item.text).join('')
+                        if (importPackage !== 'vscode') return entry
+                        vscodeExportNames.push(entry.name)
+                        return {
+                            ...entry,
+                            isSnippet: true,
+                            hasAction: true,
+                            source: undefined,
+                        }
+                    })
+                }
+
+                return prior
+            }
+
+            proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
+                const prior = info.languageService.getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data)
+                if (!prior) return
+                if (vscodeExportNames.includes(entryName)) {
+                    const firstAlias = getFirstAlias()
+                    if (!firstAlias) return prior
+                    const beforeCurrentPos = languageService
+                        .getProgram()!
+                        .getSourceFile(fileName)!
+                        .getFullText()
+                        .slice(0, position)
+                        .match(/[\w\d]*$/i)!.index!
+                    return {
+                        ...prior,
+                        codeActions: [
+                            {
+                                description: '',
+                                changes: [
+                                    {
+                                        fileName,
+                                        textChanges: [{ span: { start: beforeCurrentPos, length: 0 }, newText: `${firstAlias}.` }],
+                                    },
+                                ],
+                            },
+                        ],
                     }
                 }
                 return prior

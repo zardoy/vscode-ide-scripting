@@ -16,11 +16,11 @@ export default async () => {
     // TODO-low i think executing it on every launch could affect performance (but very small)
     if (globalNodeModulesRoot === undefined) {
         let { stdout } = await execPromise('pnpm root -g').catch(() => ({ stdout: undefined }))
-        if (!stdout) {
+        if (stdout) {
+            detectedPackageManager = 'pnpm'
+        } else {
             stdout = (await execPromise('npm root -g').catch(() => ({ stdout: undefined }))).stdout
             if (stdout) detectedPackageManager = 'npm'
-        } else {
-            detectedPackageManager = 'pnpm'
         }
         globalNodeModulesRoot = stdout ? stdout.toString().trim() : null
     }
