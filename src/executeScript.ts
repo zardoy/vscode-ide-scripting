@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { exec } from 'child_process'
 import { build, BuildOptions } from 'esbuild'
 import { partition, mergeDeepRight } from 'rambda'
 import requireFromString from 'require-from-string'
@@ -8,6 +9,9 @@ import { join } from 'path'
 import { globalNodeModulesRoot } from './tsPluginIntegration'
 import { Utils } from 'vscode-uri'
 import { dirname } from 'path/posix'
+import { promisify } from 'util'
+import { unlinkSync } from 'fs'
+import { esbuildPath, installEsbuild } from './esbuild'
 
 export default () => {
     let prevRegisteredCommand: vscode.Disposable[] | undefined
@@ -24,6 +28,8 @@ export default () => {
         esbuildOptionsArg: BuildOptions = {},
         additionalOptions: AdditionalExecOptions = {},
     ) => {
+        await checkEsbuild()
+
         if (!(targetEditorUriArg instanceof vscode.Uri)) targetEditorUriArg = undefined
         const { visibleTextEditors } = vscode.window
         let targetEditor: vscode.TextEditor | undefined
@@ -171,4 +177,19 @@ export default () => {
 
 interface ScriptResultExports {
     disposables: [vscode.Disposable, string?][]
+}
+
+const checkEsbuild = async () => {
+    let { stdout: version } = await promisify(exec)(`${process.env.ESBUILD_BINARY_PATH} ${['--version'].join(' ')}`, {})
+    version = version.trim()
+    if (version !== process.env.ESBUILD_BUNDLED_VERSION) {
+        const choice = await vscode.window.showErrorMessage(
+            `Installed esbuild ${version} is not compatible with bundled (needed) version ${process.env.ESBUILD_BUNDLED_VERSION}`,
+            'Reinstall esbuild',
+        )
+        if (choice === 'Reinstall esbuild') {
+            unlinkSync(esbuildPath)
+            installEsbuild()
+        }
+    }
 }

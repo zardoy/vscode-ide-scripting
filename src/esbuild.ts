@@ -1,9 +1,7 @@
 import * as vscode from 'vscode'
 import os from 'os'
 import fs from 'fs'
-import https from 'https'
 import { join } from 'path'
-import { GracefulCommandError } from 'vscode-framework'
 import isRunning from 'is-running'
 import util from 'util'
 import stream from 'stream'
@@ -56,10 +54,12 @@ function pkgAndSubpathForCurrentPlatform(platformKey = `${process.platform} ${os
 const getEsbuildDownloadLink = (platformKey?: string) => {
     const { pkg, subpath } = pkgAndSubpathForCurrentPlatform(platformKey)
     // jsdelvr doesn't allow to download some files!
-    return subpath.endsWith('.exe') ? `https://unpkg.com/${pkg}/${subpath}` : `https://cdn.jsdelivr.net/npm/${pkg}/${subpath}`
+    return subpath.endsWith('.exe')
+        ? `https://unpkg.com/${pkg}@${process.env.ESBUILD_BUNDLED_VERSION}/${subpath}`
+        : `https://cdn.jsdelivr.net/npm/${pkg}@${process.env.ESBUILD_BUNDLED_VERSION}/${subpath}`
 }
 
-const esbuildPath = join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')
+export const esbuildPath = join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')
 const lockedPidFile = join(__dirname, 'lockedPid')
 
 const hasEsbuild = () => {
