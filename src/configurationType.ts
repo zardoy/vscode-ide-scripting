@@ -1,6 +1,7 @@
 //@ts-ignore
-type BuildOptionsLatest = import('esbuild-latest').BuildOptions
-type BuildOptions = IsAny<BuildOptionsLatest> extends true ? import('esbuild').BuildOptions : BuildOptionsLatest
+// type BuildOptionsLatest = import('esbuild-latest').BuildOptions
+// type BuildOptions = IsAny<BuildOptionsLatest> extends true ? import('esbuild').BuildOptions : BuildOptionsLatest
+type BuildOptions = import('esbuild').BuildOptions
 
 type IsAny<T> = 0 extends 1 & T ? true : false
 

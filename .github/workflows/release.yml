@@ -22,7 +22,7 @@ jobs:
           run_install: |
             args: [--frozen-lockfile, --strict-peer-dependencies]
       - run: pnpm i vscode-latest@npm:@types/vscode@latest
-      - run: pnpm i esbuild-latest@npm:esbuild@latest
+      - run: pnpm i esbuild@latest
       - run: pnpx zardoy-release vscode-extension
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
