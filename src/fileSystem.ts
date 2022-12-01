@@ -27,6 +27,7 @@ export default () => {
             return []
         },
         readFile(uri) {
+            if (uri.path.startsWith('/^draft')) return new TextEncoder().encode('')
             const savedFiles = getSavedFiles()
             return new TextEncoder().encode(savedFiles.find(([fileName]) => fileName === uri.path)?.[2] ?? '')
         },
@@ -51,6 +52,7 @@ export default () => {
             return { dispose() {} }
         },
         async writeFile(uri, content) {
+            if (uri.path.startsWith('/^draft')) throw new Error('Cannot save draft playground contents, rename file first')
             const stringContent = content.toString()
             const savedFiles = getSavedFiles()
             let updateIndex = savedFiles.findIndex(([fileName]) => fileName === uri.path)
@@ -107,6 +109,15 @@ export default () => {
                 title: 'Create new file...',
                 value: valuePlaceholder,
                 valueSelection: [0, valuePlaceholder.length - 3],
+                validateInput(value) {
+                    if (value.startsWith('^')) {
+                        return {
+                            severity: vscode.InputBoxValidationSeverity.Error,
+                            message: 'Names starting with ^ are reserved',
+                        }
+                    }
+                    return
+                },
             })
             if (!newFileName) return
             openingFileName = newFileName
@@ -124,6 +135,15 @@ export default () => {
                       viewColumn: openLocation === 'toSide' ? vscode.ViewColumn.Beside : undefined,
                   }
                 : undefined,
+        )
+    })
+
+    registerExtensionCommand('openDraftPlayground', async () => {
+        await vscode.window.showTextDocument(
+            vscode.Uri.from({
+                scheme: SCHEME,
+                path: '/^draft.ts',
+            }),
         )
     })
 }

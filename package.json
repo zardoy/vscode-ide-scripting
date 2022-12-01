@@ -15,8 +15,8 @@
                 "title": "Open Playground..."
             },
             {
-                "command": "openLastPlayground",
-                "title": "Open Last Playground"
+                "command": "openDraftPlayground",
+                "title": "Open Draft Playground"
             },
             {
                 "command": "executeScript",
