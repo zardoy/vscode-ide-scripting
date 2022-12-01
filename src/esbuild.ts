@@ -105,7 +105,7 @@ const installEsbuildInner = async () => {
         await pipeline(
             got.stream(esbuildDownloadLink).on('downloadProgress', (downloadProgress: Progress) => {
                 progress.report({
-                    message: `${title} (Downloading: ${downloadProgress.percent * 100}%)`,
+                    message: `${title} (Downloading: ${Math.floor(downloadProgress.percent * 100)}%)`,
                 })
             }),
             fs.createWriteStream(esbuildPath),

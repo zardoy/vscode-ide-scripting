@@ -9,6 +9,7 @@ declare const text: string
 declare const lines: [string, ...string[]]
 // Target editor, defined only when @editor directive is on top
 declare const editor: import('vscode').TextEditor | '$ADD_EDITOR_UNDEFINED'
+declare const editorPos: import('vscode').Position | '$ADD_EDITOR_UNDEFINED'
 // don't be too noisy and add undefined only to editor for now
 /** Editor, that is being **currently focused**, can be playground editor */
 declare const currentEditor: import('vscode').TextEditor
@@ -19,9 +20,9 @@ declare const info: (message: any) => void
  * @param replaceRange It is important this range to exist
  */
 declare const updateText: (newText: string, replaceRange?: import('vscode').Range) => Promise<void>
-/** Create new `vscode.Position` */
+/** Shortcut for `new vscode.Position(...)` */
 declare const pos: (start: number, end: number) => import('vscode').Position
-/** Create new `vscode.Range` */
+/** Shortcut for `new vscode.Range(...)` */
 declare const range: (line: import('vscode').Position, character: import('vscode').Position) => import('vscode').Range
 
 /** Execute vscode command. Recommended alias for `vscode.commands.executeCommand` */
