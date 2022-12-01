@@ -81,7 +81,7 @@
         "@types/semver": "^7.3.12",
         "@types/vscode": "^1.71.0",
         "@zardoy/tsconfig": "^1.5.0",
-        "@zardoy/vscode-utils": "^0.0.28",
+        "@zardoy/vscode-utils": "^0.0.47",
         "semver": "^7.3.7",
         "typescript": "^4.8.2",
         "vscode-framework": "^0.0.18"
@@ -102,5 +102,15 @@
         "vsce": "microsoft/vscode-vsce",
         "vscode-latest": "npm:@types/vscode@^1.71.0",
         "vscode-uri": "^3.0.6"
+    },
+    "prettier": {
+        "semi": false,
+        "singleQuote": true,
+        "proseWrap": "never",
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "arrowParens": "avoid",
+        "printWidth": 160,
+        "endOfLine": "auto"
     }
 }

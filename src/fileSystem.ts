@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
-import { extensionCtx, getExtensionContributionsPrefix, registerExtensionCommand, showQuickPick } from 'vscode-framework'
+import { extensionCtx, getExtensionContributionsPrefix, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
+import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 
 export const SCHEME = `${getExtensionContributionsPrefix()}playground`
 // contents will stay on third place for compatibility, new metadata will follow after
@@ -65,17 +66,39 @@ export default () => {
     registerExtensionCommand('openPlayground', async (_, openToSide = true) => {
         const savedFiles = getSavedFiles()
         const formatDate = Intl.DateTimeFormat(vscode.env.language, { dateStyle: 'short' })
+        let openLocation = getExtensionSetting('openEditorPrimaryLocation')
         let currentEnteredName = ''
-        const selectedFile = await showQuickPick<string | -1>([
-            ...savedFiles.map(([fileName, lastModified, contents], i) => {
-                const lines = contents.split(/\r?\n/)
-                return { label: fileName.replace(/^\//, ''), value: fileName, description: `L: ${lines.length}, M: ${formatDate.format(lastModified)}` }
-            }),
+        let selectedFileOverride: string | undefined
+        let selectedFile = await showQuickPick(
+            [
+                ...savedFiles.map(([fileName, lastModified, contents], i): VSCodeQuickPickItem<string | -1> => {
+                    const lines = contents.split(/\r?\n/)
+                    return {
+                        label: fileName.replace(/^\//, ''),
+                        value: fileName,
+                        description: `L: ${lines.length}, M: ${formatDate.format(lastModified)}`,
+                        buttons: [
+                            {
+                                iconPath: new vscode.ThemeIcon(openLocation === 'toSide' ? 'window' : 'split-horizontal'),
+                                tooltip: openLocation === 'toSide' ? 'Open in new editor tab' : 'Open to side',
+                            },
+                        ],
+                    }
+                }),
+                {
+                    label: '$(add) Create new file',
+                    value: -1,
+                },
+            ],
             {
-                label: '$(add) Create new file',
-                value: -1,
+                onDidTriggerItemButton(button) {
+                    openLocation = openLocation === 'toSide' ? 'newTab' : 'toSide'
+                    selectedFileOverride = button.item.value as string
+                    this.hide()
+                },
             },
-        ])
+        )
+        selectedFile ??= selectedFileOverride
         if (selectedFile === undefined) return
         let openingFileName: string
         if (selectedFile === -1) {
@@ -98,7 +121,7 @@ export default () => {
             }),
             openToSide
                 ? {
-                      viewColumn: vscode.ViewColumn.Beside,
+                      viewColumn: openLocation === 'toSide' ? vscode.ViewColumn.Beside : undefined,
                   }
                 : undefined,
         )

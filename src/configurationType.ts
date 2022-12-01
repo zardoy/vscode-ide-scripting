@@ -32,6 +32,10 @@ export type Configuration = {
      */
     openOutputBeforeStart: 'never' | 'always' | 'ifNeeded'
     /**
+     * @default toSide
+     */
+    openEditorPrimaryLocation: 'toSide' | 'newTab'
+    /**
      * For advanced use cases.
      * Override esbuild options that are used when bundling on every script run
      */
