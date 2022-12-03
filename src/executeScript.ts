@@ -14,7 +14,7 @@ import { unlinkSync } from 'fs'
 import { esbuildPath, installEsbuild } from './esbuild'
 
 export default () => {
-    let prevRegisteredCommand: vscode.Disposable[] | undefined
+    let disposeFromPrevScriptCommands: vscode.Disposable[] | undefined
 
     type AdditionalExecOptions = {
         injectScript?: string
@@ -100,7 +100,7 @@ export default () => {
             return
         }
 
-        if (prevRegisteredCommand) await vscode.commands.executeCommand(getExtensionCommandId('disposeDisposables'))
+        if (disposeFromPrevScriptCommands) await vscode.commands.executeCommand(getExtensionCommandId('disposeDisposables'))
         if (getExtensionSetting('clearOutputBeforeStart')) console.clear()
         const buildScriptText = buildResult.outputFiles[0]!.text
         // const buildLines = buildScriptText.split('\n')
@@ -113,8 +113,8 @@ export default () => {
         setImmediate(() => {
             try {
                 const executionResult: ScriptResultExports = requireFromString(buildScriptText)
-                // if (!executionResult) return
-                vscode.Disposable.from(...(prevRegisteredCommand ?? [])).dispose()
+                if (!executionResult.disposables) return
+                vscode.Disposable.from(...(disposeFromPrevScriptCommands ?? [])).dispose()
                 registerExtensionCommand('disposeDisposables', () => {
                     vscode.Disposable.from(...executionResult.disposables.map(([disposable]) => disposable)).dispose()
                 })
@@ -133,9 +133,9 @@ export default () => {
                     if (!disposable) return
                     disposable.dispose()
                 })
-                prevRegisteredCommand = extensionCtx.subscriptions.slice(-2)
+                disposeFromPrevScriptCommands = extensionCtx.subscriptions.slice(-2)
             } catch (err) {
-                vscode.window.showErrorMessage('Error when executing script', { modal: true, detail: err.stack ?? err.message })
+                vscode.window.showErrorMessage('Error when executing script', { modal: true, detail: err.stack ?? err.message ?? err })
             }
             // TODO create decoration
         })
