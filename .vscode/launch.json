@@ -10,7 +10,22 @@
             ],
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
-            ]
-        }
+            ],
+            "env": {
+                "TSS_DEBUG": "9223",
+                "TSS_REMOTE_DEBUG": "9223"
+            }
+        },
+        {
+            "name": "Attach to TS Server",
+            "type": "node",
+            "request": "attach",
+            "restart": true,
+            "port": 9223,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+        },
     ]
 }

@@ -29,15 +29,17 @@ export default async () => {
     const PLUGIN_NAME = 'vscode-ide-scripting-typescript-plugin'
 
     const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
-    if (!tsExtension) return
+    if (!tsExtension) {
+        console.warn("Can't sync data to TS plugin as vscode.typescript-language-features is not active")
+        return
+    }
 
     await tsExtension.activate()
 
     // Get the API from the TS extension
-    if (!tsExtension.exports || !tsExtension.exports.getAPI) return
+    if (!tsExtension.exports || !tsExtension.exports.getAPI?.(0)) throw new Error('No TS API')
 
     const api = tsExtension.exports.getAPI(0)
-    if (!api) return
 
     const getTargetEditorsNum = () => vscode.window.visibleTextEditors.filter(({ document: { uri } }) => !['output', SCHEME].includes(uri.scheme)).length
     let targetVisibleEditorsNum = getTargetEditorsNum()
@@ -61,6 +63,7 @@ export default async () => {
     syncConfig()
 
     vscode.window.onDidChangeVisibleTextEditors(editors => {
+        if (!editors.some(editor => editor.document.uri.scheme === SCHEME)) return
         const newNum = getTargetEditorsNum()
         // TODO move it from here
         void vscode.commands.executeCommand(
