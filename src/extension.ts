@@ -1,21 +1,43 @@
 import registerFileSystemProvider from './fileSystem'
 import tsPluginIntegration from './tsPluginIntegration'
 import completions from './completions'
-import { installEsbuild } from './esbuild'
-import executeScript from './executeScript'
+import { initialEsbuildInstalledCheck, installEsbuild } from './esbuild'
+import executeScript, { esbuildBundle } from './executeScript'
 import { registerExtensionCommand } from 'vscode-framework'
 import codeFixes from './codeFixes'
+import playgroundCommands from './playgroundCommands'
 
 export const activate = () => {
     tsPluginIntegration()
-    installEsbuild()
+    const esbuildInstallPromise = newPromise()
+    installEsbuild(esbuildInstallPromise.resolve)
     registerFileSystemProvider()
 
     completions()
     executeScript()
     codeFixes()
+    playgroundCommands()
 
     registerExtensionCommand('focusOutput', () => {
         console.show(true)
     })
+
+    const api = {
+        esbuildBundle,
+    }
+    return {
+        esbuild: initialEsbuildInstalledCheck.value ? api : esbuildInstallPromise.promise.then(() => api),
+    }
+}
+
+const newPromise = () => {
+    let resolve: () => void
+    return {
+        promise: new Promise<void>(r => {
+            resolve = r
+        }),
+        resolve() {
+            resolve()
+        },
+    }
 }

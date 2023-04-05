@@ -1,8 +1,10 @@
 import * as vscode from 'vscode'
 import { extensionCtx, getExtensionContributionsPrefix, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
+import { playgroundsToSave, savePlaygroundContents } from './playgroundCommands'
 
 export const SCHEME = `${getExtensionContributionsPrefix()}playground`
+export const DRAFT_PREFIX = '/^draft'
 // contents will stay on third place for compatibility, new metadata will follow after
 type GlobalStateFileSave = [fileName: string, lastModified: number, contents: string]
 
@@ -27,7 +29,7 @@ export default () => {
             return []
         },
         readFile(uri) {
-            if (uri.path.startsWith('/^draft')) return new TextEncoder().encode('')
+            if (uri.path.startsWith(DRAFT_PREFIX)) return new TextEncoder().encode('')
             const savedFiles = getSavedFiles()
             return new TextEncoder().encode(savedFiles.find(([fileName]) => fileName === uri.path)?.[2] ?? '')
         },
@@ -52,7 +54,7 @@ export default () => {
             return { dispose() {} }
         },
         async writeFile(uri, content) {
-            if (uri.path.startsWith('/^draft')) throw new Error('Cannot save draft playground contents, rename file first')
+            if (uri.path.startsWith(DRAFT_PREFIX)) throw new Error('Cannot save draft playground contents, rename file first')
             const stringContent = content.toString()
             const savedFiles = getSavedFiles()
             let updateIndex = savedFiles.findIndex(([fileName]) => fileName === uri.path)
@@ -62,6 +64,7 @@ export default () => {
             savedFiles[updateIndex]![2] = stringContent
             savedFiles[updateIndex]![1] = Date.now()
             await updateSavedFiles(savedFiles)
+            if (playgroundsToSave.has(uri.path)) await savePlaygroundContents(uri, stringContent)
         },
     })
 

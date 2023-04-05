@@ -42,6 +42,10 @@
             {
                 "command": "executeScriptFromCurrentEditor",
                 "title": "Execute Script From Current Editor"
+            },
+            {
+                "command": "saveFileToTempAndCopyPath",
+                "title": "Save File to Temp and Copy Path"
             }
         ],
         "typescriptServerPlugins": [

@@ -62,10 +62,15 @@ const getEsbuildDownloadLink = (platformKey?: string) => {
 export const esbuildPath = join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')
 const lockedPidFile = join(__dirname, 'lockedPid')
 
-const hasEsbuild = () => {
+export const initialEsbuildInstalledCheck = {
+    value: false,
+}
+
+const isEsbuildInstalled = () => {
     try {
         const stat = fs.statSync(esbuildPath)
         if (stat.size < 1000) return false
+        initialEsbuildInstalledCheck.value = true
         return true
     } catch {
         return false
@@ -88,7 +93,7 @@ const isAnotherInstanceAlreadyInstalling = () => {
 }
 
 const installEsbuildInner = async () => {
-    if (hasEsbuild()) return
+    if (isEsbuildInstalled()) return
     // when extension is installed in one window it becomes enabled in all opened windows
     // so we need to ensure we don't call this and installing esbuild only in one instance
     // by this we ensure installing doesn't happen in another instances
@@ -116,10 +121,12 @@ const installEsbuildInner = async () => {
     })
 }
 
-export const installEsbuild = () => {
-    installEsbuildInner().catch(async err => {
-        fs.unlinkSync(lockedPidFile)
-        const choice = await vscode.window.showErrorMessage(`Failed to install esbuild: ${err.message}`, 'Retry')
-        if (choice) installEsbuild()
-    })
+export const installEsbuild = (promiseCallback: (() => void) | undefined) => {
+    installEsbuildInner()
+        .catch(async err => {
+            fs.unlinkSync(lockedPidFile)
+            const choice = await vscode.window.showErrorMessage(`Failed to install esbuild: ${err.message}`, 'Retry')
+            if (choice) installEsbuild(promiseCallback)
+        })
+        .then(() => promiseCallback?.())
 }

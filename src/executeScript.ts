@@ -72,33 +72,9 @@ export default () => {
             injectScript = `__filename = "${__filename}"\n__dirname = "${dirname(__filename)}"\n\n${injectScript}`
         }
 
-        const esbuildBuildOptions = getExtensionSetting('esbuildBuildOptions')
         const userCodeToBundle = playgroundScriptContents ?? playgroundEditor!.document.getText()
-        const buildResult = await build({
-            ...mergeDeepRight(
-                {
-                    bundle: true,
-                    platform: process.env.PLATFORM === 'node' ? 'node' : 'browser',
-                    format: 'cjs',
-                    external: ['vscode'],
-                    stdin: {
-                        contents: injectScript + userCodeToBundle,
-                        loader: 'tsx',
-                        resolveDir: globalNodeModulesRoot ?? undefined,
-                    },
-                    write: false,
-                    mainFields: ['module', 'main'],
-                } as BuildOptions,
-                { ...esbuildBuildOptions, ...esbuildOptionsArg },
-            ),
-        })
-        if (buildResult.errors.length) {
-            vscode.window.showErrorMessage('Error compiling (bundling) the script', {
-                modal: true,
-                detail: buildResult.errors.map(({ text }) => text).join('\n'),
-            })
-            return
-        }
+        const buildResult = await esbuildBundle(injectScript, userCodeToBundle, esbuildOptionsArg)
+        if (!buildResult) return
 
         if (disposeFromPrevScriptCommands) await vscode.commands.executeCommand(getExtensionCommandId('disposeDisposables'))
         if (getExtensionSetting('clearOutputBeforeStart')) console.clear()
@@ -189,7 +165,37 @@ const checkEsbuild = async () => {
         )
         if (choice === 'Reinstall esbuild') {
             unlinkSync(esbuildPath)
-            installEsbuild()
+            installEsbuild(undefined)
         }
     }
+}
+
+export const esbuildBundle = async (injectScript: string, userCodeToBundle: string, esbuildOptionsArg: any) => {
+    const esbuildBuildOptions = getExtensionSetting('esbuildBuildOptions')
+    const buildResult = await build({
+        ...mergeDeepRight(
+            {
+                bundle: true,
+                platform: process.env.PLATFORM === 'node' ? 'node' : 'browser',
+                format: 'cjs',
+                external: ['vscode'],
+                stdin: {
+                    contents: injectScript + userCodeToBundle,
+                    loader: 'tsx',
+                    resolveDir: globalNodeModulesRoot ?? undefined,
+                },
+                write: false,
+                mainFields: ['module', 'main'],
+            } as BuildOptions,
+            { ...esbuildBuildOptions, ...esbuildOptionsArg },
+        ),
+    })
+    if (buildResult.errors.length) {
+        vscode.window.showErrorMessage('Error compiling (bundling) the script', {
+            modal: true,
+            detail: buildResult.errors.map(({ text }) => text).join('\n'),
+        })
+        return
+    }
+    return buildResult
 }
