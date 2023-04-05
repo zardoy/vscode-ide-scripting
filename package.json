@@ -76,7 +76,7 @@
     ],
     "scripts": {
         "start": "vscode-framework start",
-        "build": "vscode-framework build && node buildTsPlugin.mjs prod && node scripts/buildExtension.mjs",
+        "build": "vscode-framework build && node buildTsPlugin.mjs prod",
         "watch-plugin": "node buildTsPlugin.mjs",
         "postinstall": "patch-package"
     },
