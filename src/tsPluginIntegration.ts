@@ -4,6 +4,7 @@ import * as vscode from 'vscode'
 import { getExtensionSettingId } from 'vscode-framework'
 import { Configuration, CustomPluginData } from './configurationType'
 import { SCHEME } from './fileSystem'
+import { join } from 'path'
 
 // that's fine untill..
 export let globalNodeModulesRoot: string | undefined | null
@@ -50,6 +51,7 @@ export default async () => {
 
         config.npmRoot = globalNodeModulesRoot ?? undefined
         config.targetEditorVisible = targetVisibleEditorsNum >= 1
+        config.vscodeDTsPath = join(vscode.env.appRoot, 'out/vscode-dts/vscode.d.ts')
         api.configurePlugin(PLUGIN_NAME, config)
     }
 

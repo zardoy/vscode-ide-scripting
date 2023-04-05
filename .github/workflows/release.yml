@@ -21,7 +21,6 @@ jobs:
           version: latest
           run_install: |
             args: [--frozen-lockfile, --strict-peer-dependencies]
-      - run: pnpm i vscode-latest@npm:@types/vscode@latest
       # - run: pnpm i esbuild@latest
       - run: pnpx zardoy-release vscode-extension
         env:

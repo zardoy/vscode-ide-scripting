@@ -24,19 +24,7 @@ import superb from 'superb'
 info(`You are ${superb.random()}`) // You are awesome
 ```
 
-### Another Example
-
-```console
-npm i -g jsonc-parser
-```
-
-```ts
-import {} from 'json-parser'
-
-info(`You are ${superb.random()}`) // You are awesome
-```
-
-or
+Or
 
 ```console
 npm i -g jsonc-parser
@@ -63,10 +51,6 @@ vscode.workspace.findFiles('**/*.js', '**/node_modules/**').then((files) => {
     item.text = 'Files: '+files.length
 })
 ```
-
-### Notes
-
-- if there is no note in changelog/releases about specific/latest extension version it means it was released automatically to keep vscode typings in your playground up to date
 
 ## Some More Screenshots
 

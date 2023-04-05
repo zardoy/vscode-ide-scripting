@@ -78,7 +78,7 @@
     },
     "devDependencies": {
         "@types/semver": "^7.3.12",
-        "@types/vscode": "^1.71.0",
+        "@types/vscode": "1.71.0",
         "@zardoy/tsconfig": "^1.5.0",
         "@zardoy/vscode-utils": "^0.0.47",
         "semver": "^7.3.7",
@@ -98,8 +98,6 @@
         "rambda": "^7.2.1",
         "require-from-string": "^2.0.2",
         "typed-jsonfile": "^0.2.1",
-        "vsce": "microsoft/vscode-vsce",
-        "vscode-latest": "npm:@types/vscode@^1.71.0",
         "vscode-uri": "^3.0.6"
     },
     "prettier": {

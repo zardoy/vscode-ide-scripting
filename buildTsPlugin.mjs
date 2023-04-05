@@ -19,16 +19,9 @@ await buildTsPlugin('typescript-plugin', undefined, undefined, {
                     }
                 })
                 build.onLoad({ filter: /.*/, namespace: 'GLOBAL_API_CONTENT' }, () => {
-                    const basicContent = readFileSync('./typescript-plugin/globalApiTypes.ts', 'utf-8')
-                    let vscodeDts
-                    try {
-                        vscodeDts = readFileSync('./node_modules/vscode-latest/index.d.ts', 'utf-8')
-                    } catch (err) {
-                        if (process.env.CI) throw new Error('Latest vscode types must be installed!')
-                        vscodeDts = readFileSync('./node_modules/@types/vscode/index.d.ts', 'utf-8')
-                    }
+                    const contents = readFileSync('./typescript-plugin/globalApiTypes.ts', 'utf-8')
                     return {
-                        contents: basicContent + '\n' + vscodeDts,
+                        contents,
                         loader: 'text',
                     }
                 })

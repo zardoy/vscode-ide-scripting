@@ -51,4 +51,5 @@ export type Configuration = {
 export type CustomPluginData = {
     npmRoot?: string
     targetEditorVisible: boolean
+    vscodeDTsPath: string
 }

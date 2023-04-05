@@ -12,7 +12,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
     const updateCallbacks: Array<() => void> = []
     return {
         create(info: ts.server.PluginCreateInfo) {
-            if (info.project.projectKind !== ts.server.ProjectKind.Inferred) return
+            if (info.project?.projectKind !== ts.server.ProjectKind.Inferred) return
             const openedFiles = [...(info.project.projectService.openFiles.keys() as any)] as string[]
             // don't add globals such as code to untitled and other inferred/full projects
             let ourFileRoot: string | undefined
@@ -67,6 +67,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 },
                 getScriptSnapshot(result, fileName) {
                     if (fileName === apiFileName) {
+                        const vscodeDTs = _configuration?.vscodeDTsPath && info.languageServiceHost.readFile(_configuration.vscodeDTsPath, 'utf8')
                         let globalApiTypes = require('GLOBAL_API_CONTENT')
                         globalApiTypes = globalApiTypes
                             .replace("'$VSCODE_ALIASES'", () => {
@@ -80,7 +81,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                     .join('\n')
                             })
                             .replaceAll(" | '$ADD_EDITOR_UNDEFINED'", _configuration?.targetEditorVisible ? '' : ' | undefined')
-                        return ts.ScriptSnapshot.fromString(globalApiTypes)
+                        return ts.ScriptSnapshot.fromString(globalApiTypes + '\n' + vscodeDTs ?? '')
                     }
                     return result
                 },
@@ -197,7 +198,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             proxy.getDefinitionAndBoundSpan = (fileName, position) => {
                 const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
                 if (!prior) return
-                prior.definitions = prior.definitions?.filter(({ fileName }) => fileName !== apiFileName)
+                // prior.definitions = prior.definitions?.filter(({ fileName }) => fileName !== apiFileName)
                 return prior
             }
 
