@@ -1,8 +1,10 @@
+import type ts from 'typescript/lib/tsserverlibrary'
 import { inspect } from 'util'
 
 //@ts-ignore
 import type { Configuration, CustomPluginData } from '../../src/configurationType'
 import { addObjectMethodResultInterceptors, updateSourceFile } from './util'
+import specialRequest from './specialRequest'
 
 export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     const ts = typescript
@@ -143,6 +145,16 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
             let vscodeExportNames: string[] = []
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
+                if (isInPlayground) {
+                    const specialResponse = specialRequest(ts, languageService, fileName, position, options ?? {})
+                    if (specialResponse === undefined) return
+                    if (specialResponse !== null) {
+                        return {
+                            entries: [],
+                            specialResponse,
+                        } as any
+                    }
+                }
                 vscodeExportNames = []
                 const prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
                 if (!isInPlayground) return prior

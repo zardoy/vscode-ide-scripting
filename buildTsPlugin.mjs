@@ -7,6 +7,7 @@ const prod = process.argv[2] === 'prod'
 await buildTsPlugin('typescript-plugin', undefined, undefined, {
     logLevel: 'info',
     watch: !prod,
+    sourcemap: !prod ? 'inline' : undefined,
     minify: prod,
     plugins: [
         {

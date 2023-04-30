@@ -86,7 +86,7 @@
         "@zardoy/tsconfig": "^1.5.0",
         "@zardoy/vscode-utils": "^0.0.47",
         "semver": "^7.3.7",
-        "typescript": "^4.8.2",
+        "typescript": "^5.0.4",
         "vscode-framework": "^0.0.18"
     },
     "dependencies": {

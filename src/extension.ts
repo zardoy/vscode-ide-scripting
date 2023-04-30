@@ -6,6 +6,7 @@ import executeScript, { esbuildBundle } from './executeScript'
 import { registerExtensionCommand } from 'vscode-framework'
 import codeFixes from './codeFixes'
 import playgroundCommands from './playgroundCommands'
+import tsCodeActionsFix from './tsCodeActionsFix'
 
 export const activate = () => {
     tsPluginIntegration()
@@ -17,6 +18,7 @@ export const activate = () => {
     executeScript()
     codeFixes()
     playgroundCommands()
+    tsCodeActionsFix()
 
     registerExtensionCommand('focusOutput', () => {
         console.show(true)
