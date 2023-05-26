@@ -7,6 +7,7 @@ import { registerExtensionCommand } from 'vscode-framework'
 import codeFixes from './codeFixes'
 import playgroundCommands from './playgroundCommands'
 import tsCodeActionsFix from './tsCodeActionsFix'
+import { newPromise } from './util'
 
 export const activate = () => {
     tsPluginIntegration()
@@ -29,17 +30,5 @@ export const activate = () => {
     }
     return {
         esbuild: initialEsbuildInstalledCheck.value ? api : esbuildInstallPromise.promise.then(() => api),
-    }
-}
-
-const newPromise = () => {
-    let resolve: () => void
-    return {
-        promise: new Promise<void>(r => {
-            resolve = r
-        }),
-        resolve() {
-            resolve()
-        },
     }
 }

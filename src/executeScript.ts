@@ -10,8 +10,9 @@ import { globalNodeModulesRoot } from './tsPluginIntegration'
 import { Utils } from 'vscode-uri'
 import { dirname } from 'path/posix'
 import { promisify } from 'util'
-import { unlinkSync } from 'fs'
+import { readFileSync, unlinkSync } from 'fs'
 import { esbuildPath, installEsbuild } from './esbuild'
+import { newPromise } from './util'
 
 export default () => {
     let disposeFromPrevScriptCommands: vscode.Disposable[] | undefined
@@ -56,9 +57,7 @@ export default () => {
         // the possibilities of this pattern should be insane
         let { injectScript, __filename } = additionalOptions
         if (injectScript === undefined) {
-            // TODO change to require once!
-            const fs = await import('fs')
-            injectScript = fs.readFileSync(join(__dirname, './resources/injectScript.js'), 'utf-8')
+            injectScript = readFileSync(join(__dirname, './resources/injectScript.js'), 'utf-8')
         }
 
         injectScript = injectScript.replace('$TEXT_EDITOR_URI', targetEditor ? targetEditor.document.uri.toString() : '').replace("'$VSCODE_ALIASES'", () => {
@@ -121,6 +120,7 @@ export default () => {
         try {
             await executeScriptHandler(...args)
         } catch (err) {
+            console.error(err)
             throw new GracefulCommandError(err.message)
         }
     })
@@ -156,6 +156,9 @@ interface ScriptResultExports {
 }
 
 const checkEsbuild = async () => {
+    const esbuildInstallPromise = newPromise()
+    installEsbuild(esbuildInstallPromise.resolve)
+    await esbuildInstallPromise.promise
     let { stdout: version } = await promisify(exec)(`${process.env.ESBUILD_BINARY_PATH} ${['--version'].join(' ')}`, {})
     version = version.trim()
     if (version !== process.env.ESBUILD_BUNDLED_VERSION) {
