@@ -8,6 +8,7 @@ import codeFixes from './codeFixes'
 import playgroundCommands from './playgroundCommands'
 import tsCodeActionsFix from './tsCodeActionsFix'
 import { newPromise } from './util'
+import apiCommands from './apiCommands'
 
 export const activate = () => {
     tsPluginIntegration()
@@ -24,6 +25,8 @@ export const activate = () => {
     registerExtensionCommand('focusOutput', () => {
         console.show(true)
     })
+
+    apiCommands()
 
     const api = {
         esbuildBundle,

@@ -8,7 +8,9 @@ patchPackageJson({})
 module.exports = defineConfig({
     esbuild: {
         banner: {
-            js: `const __ESBUILD_BINARY_PATH = require('path').join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild')`,
+            js: `const __ESBUILD_BINARY_PATH = require('path').join(__dirname, process.platform === 'win32' ? 'esbuild.exe' : 'esbuild');__API_COMMANDS=${JSON.stringify(
+                readFileSync('./out/api-commands.json', 'utf8'),
+            )}`,
         },
         // @ts-ignore
         define: {

@@ -46,6 +46,10 @@
             {
                 "command": "saveFileToTempAndCopyPath",
                 "title": "Save File to Temp and Copy Path"
+            },
+            {
+                "command": "showBuiltinApiCommands",
+                "title": "Show Builtin Api Commands"
             }
         ],
         "typescriptServerPlugins": [
@@ -75,8 +79,8 @@
         "onCommands"
     ],
     "scripts": {
-        "start": "vscode-framework start",
-        "build": "vscode-framework build && node buildTsPlugin.mjs prod",
+        "start": "tsm buildApiCommands.ts && vscode-framework start",
+        "build": "tsm buildApiCommands.ts && vscode-framework build && node buildTsPlugin.mjs prod",
         "watch-plugin": "node buildTsPlugin.mjs",
         "postinstall": "patch-package"
     },
@@ -85,9 +89,11 @@
         "@types/vscode": "1.71.0",
         "@zardoy/tsconfig": "^1.5.0",
         "@zardoy/vscode-utils": "^0.0.47",
+        "clipboardy": "^3.0.0",
         "semver": "^7.3.7",
         "typescript": "^5.0.4",
-        "vscode-framework": "^0.0.18"
+        "vscode-framework": "^0.0.18",
+        "tsm": "^2.3.0"
     },
     "dependencies": {
         "@milahu/patch-package-with-pnpm-support": "^6.4.8",
