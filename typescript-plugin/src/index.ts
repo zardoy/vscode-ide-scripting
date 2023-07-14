@@ -35,21 +35,25 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             // in our inferred project
             let isInPlayground = true
             const apiFileName = '^/ideScripting.playground/ts-nul-authority/__virtual-vscode-api.ts'
+            const apiFileName2 = '^/ideScripting.playground/ts-nul-authority/__virtual_globals.d.ts'
             // const apiFileName = '/vscode-virtual-api.ts'
-            const updateBaseUrl = () => {
+            const updateProjectOptions = () => {
                 if (!_configuration?.npmRoot) return
                 info.project.setCompilerOptions({
                     ...info.project.getCompilerOptions(),
                     baseUrl: _configuration.npmRoot,
+                    paths: {
+                        vscode: [_configuration?.vscodeDTsPath],
+                    },
                 })
             }
             info.project.setCompilerOptions({
                 ...info.project.getCompilerOptions(),
                 lib: ['lib.esnext.d.ts', 'lib.webworker.d.ts'],
             })
-            updateBaseUrl()
+            updateProjectOptions()
             updateCallbacks.push(() => {
-                updateBaseUrl()
+                updateProjectOptions()
                 const program = info.languageService.getProgram()!
                 const sourceFile = program.getSourceFile(apiFileName)!
 
@@ -65,11 +69,11 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
             addObjectMethodResultInterceptors(info.languageServiceHost, {
                 getScriptFileNames(files) {
-                    return [...files, apiFileName]
+                    return [...files, apiFileName, apiFileName2]
                 },
                 getScriptSnapshot(result, fileName) {
                     if (fileName === apiFileName) {
-                        const vscodeDTs = _configuration?.vscodeDTsPath && info.languageServiceHost.readFile(_configuration.vscodeDTsPath, 'utf8')
+                        const vscodeDTs = undefined
                         let globalApiTypes = require('GLOBAL_API_CONTENT')
                         globalApiTypes = globalApiTypes
                             .replace("'$VSCODE_ALIASES'", () => {
@@ -79,16 +83,31 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                 }
                                 const alises = _configuration?.vscodeAliases ?? ['vscode']
                                 return alises
+                                    .filter(alias => alias !== 'vscode')
                                     .map(alias => `/** ${knownJsdocs[alias] ?? 'Alias for vscode'} */\ndeclare const ${alias}: typeof import('vscode')`)
                                     .join('\n')
                             })
                             .replaceAll(" | '$ADD_EDITOR_UNDEFINED'", _configuration?.targetEditorVisible ? '' : ' | undefined')
-                        return ts.ScriptSnapshot.fromString(globalApiTypes + '\n' + vscodeDTs ?? '')
+                        return ts.ScriptSnapshot.fromString(globalApiTypes)
+                    }
+                    if (fileName === apiFileName2) {
+                        const contents = /* ts */ `
+                            // There is the only way... to make it work
+                            import vscode = require("vscode")
+                            export = vscode
+                            export as namespace vscode
+                            declare global {
+                                const vscode: typeof import('vscode')
+                            }
+                            declare const vscode: typeof import('vscode')
+                        `
+                        return ts.ScriptSnapshot.fromString(contents)
                     }
                     return result
                 },
                 getScriptVersion(result, fileName) {
                     if (fileName === apiFileName) return `${updateVersion}`
+                    if (fileName === apiFileName2) return `${updateVersion}`
                     return result
                 },
             })
