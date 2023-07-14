@@ -5,6 +5,10 @@ const { readFileSync } = require('fs')
 
 patchPackageJson({})
 
+if (process.argv[2] !== 'build' && process.argv[2] !== 'start') {
+    module.exports = {}
+}
+
 module.exports = defineConfig({
     esbuild: {
         banner: {

@@ -9,4 +9,5 @@ if (fs.existsSync(outFile)) {
 }
 
 const { default: ts } = await import('typescript')
+fs.mkdirSync('out', { recursive: true })
 fs.writeFileSync(outFile, JSON.stringify(await doParse(ts)), 'utf8')
