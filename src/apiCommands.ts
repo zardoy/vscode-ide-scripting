@@ -49,6 +49,7 @@ export default () => {
                                 resolve(button.item.value)
                             }
                             if (button.button === insertCodeButton) {
+                                const editor = vscode.window.activeTextEditor
                                 if (!editor) {
                                     void vscode.window.showWarningMessage('No active editor')
                                     return
@@ -58,7 +59,7 @@ export default () => {
                                 snippet.appendText(`command('${command.id}'`)
                                 for (const arg of command.args) {
                                     snippet.appendText(', ')
-                                    snippet.appendPlaceholder(arg.name + arg.optional ? '?' : '' + ': ' + arg.typeStringified)
+                                    snippet.appendPlaceholder(arg.name + (arg.optional ? '?' : '' + ': ') + arg.typeStringified)
                                 }
                                 snippet.appendText(')')
                                 editor.insertSnippet(snippet)

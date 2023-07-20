@@ -38,8 +38,7 @@ export default () => {
         let playgroundScriptContents: string | undefined
         if (!targetEditorUriArg || !playgroundScriptArg) {
             let [playgroundEditors, targetEditors] = partition(({ document: { uri } }) => uri.scheme === SCHEME, visibleTextEditors as vscode.TextEditor[])
-            // TODO remove this limitation somehow
-            targetEditors = targetEditors.filter(({ document: { uri } }) => !['output'].includes(uri.scheme))
+            targetEditors = targetEditors.filter(({ document: { uri }, viewColumn }) => viewColumn !== undefined)
             if (playgroundEditors.length !== 1) throw new Error('One playground editor must be visible')
             playgroundEditor = playgroundEditors[0]!
             targetEditor = targetEditors[0]
