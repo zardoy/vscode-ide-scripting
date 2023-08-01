@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { exec } from 'child_process'
-import { build, BuildOptions } from 'esbuild'
+import { build, transform, BuildOptions, TransformOptions } from 'esbuild'
 import { partition, mergeDeepRight } from 'rambda'
 import requireFromString from 'require-from-string'
 import { registerExtensionCommand, getExtensionSetting, extensionCtx, getExtensionCommandId, showQuickPick, GracefulCommandError } from 'vscode-framework'
@@ -72,6 +72,13 @@ export default () => {
 
         const userCodeToBundle = playgroundScriptContents ?? playgroundEditor!.document.getText()
         const buildResult = await esbuildBundle(injectScript, userCodeToBundle, esbuildOptionsArg)
+        if (buildResult.errors.length) {
+            vscode.window.showErrorMessage('Error compiling (bundling) the script', {
+                modal: true,
+                detail: buildResult.errors.map(({ text }) => text).join('\n'),
+            })
+            return
+        }
         if (!buildResult) return
 
         if (disposeFromPrevScriptCommands) await vscode.commands.executeCommand(getExtensionCommandId('disposeDisposables'))
@@ -172,7 +179,8 @@ const checkEsbuild = async () => {
     }
 }
 
-export const esbuildBundle = async (injectScript: string, userCodeToBundle: string, esbuildOptionsArg: any) => {
+/** Don't forget to check buildResult.errors */
+export const esbuildBundle = async (injectScript: string, userCodeToBundle: string, esbuildOptionsArg?: any) => {
     const esbuildBuildOptions = getExtensionSetting('esbuildBuildOptions')
     const buildResult = await build({
         ...mergeDeepRight(
@@ -188,16 +196,25 @@ export const esbuildBundle = async (injectScript: string, userCodeToBundle: stri
                 },
                 write: false,
                 mainFields: ['module', 'main'],
+                // todo change to satisfies after framework or esbuild update
             } as BuildOptions,
             { ...esbuildBuildOptions, ...esbuildOptionsArg },
         ),
     })
-    if (buildResult.errors.length) {
-        vscode.window.showErrorMessage('Error compiling (bundling) the script', {
-            modal: true,
-            detail: buildResult.errors.map(({ text }) => text).join('\n'),
-        })
-        return
-    }
     return buildResult
+}
+
+/** Don't forget to check buildResult.errors */
+export const esbuildTransform = async (userCode: string, esbuildOptionsArg?: Partial<TransformOptions>) => {
+    const transformResult = await transform(userCode, {
+        ...mergeDeepRight(
+            {
+                platform: process.env.PLATFORM === 'node' ? 'node' : 'browser',
+                format: 'cjs',
+                loader: 'tsx',
+            } as TransformOptions,
+            { ...esbuildOptionsArg },
+        ),
+    })
+    return transformResult
 }

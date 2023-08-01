@@ -4,10 +4,10 @@
 #   npx patch-package vscode-framework
 #
 # declared package:
-#   vscode-framework: ^0.0.18
+#   vscode-framework: 0.0.18
 #
 diff --git a/node_modules/vscode-framework/build/cli/esbuild/esbuild.js b/node_modules/vscode-framework/build/cli/esbuild/esbuild.js
-index 8e7b5e7..5ce984d 100644
+index 8e7b5e7..8db8e61 100644
 --- a/node_modules/vscode-framework/build/cli/esbuild/esbuild.js
 +++ b/node_modules/vscode-framework/build/cli/esbuild/esbuild.js
 @@ -67,6 +67,7 @@ const runEsbuild = async ({ target, mode, outDir, afterSuccessfulBuild = () => {
@@ -18,3 +18,14 @@ index 8e7b5e7..5ce984d 100644
          },
          plugins: [
              {
+diff --git a/node_modules/vscode-framework/build/extensionBootstrap.ts b/node_modules/vscode-framework/build/extensionBootstrap.ts
+index 79d884c..cdc8533 100644
+--- a/node_modules/vscode-framework/build/extensionBootstrap.ts
++++ b/node_modules/vscode-framework/build/extensionBootstrap.ts
+@@ -109,5 +109,5 @@ if (process.env.EXTENSION_BOOTSTRAP_CONFIG) {
+ export const activate: Extension['activate'] = ctx => {
+     __VSCODE_FRAMEWORK_CONTEXT = ctx
+     for (const activate of activateFunctions) void activate(ctx)
+-    require(process.env.EXTENSION_ENTRYPOINT!).activate(ctx)
++    return require(process.env.EXTENSION_ENTRYPOINT!).activate(ctx)
+ }

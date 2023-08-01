@@ -92,7 +92,7 @@
         "clipboardy": "^3.0.0",
         "semver": "^7.3.7",
         "typescript": "^5.0.4",
-        "vscode-framework": "^0.0.18",
+        "vscode-framework": "0.0.18",
         "tsm": "^2.3.0"
     },
     "dependencies": {

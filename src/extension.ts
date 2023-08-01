@@ -2,7 +2,7 @@ import registerFileSystemProvider from './fileSystem'
 import tsPluginIntegration from './tsPluginIntegration'
 import completions from './completions'
 import { initialEsbuildInstalledCheck, installEsbuild } from './esbuild'
-import executeScript, { esbuildBundle } from './executeScript'
+import executeScript, { esbuildBundle, esbuildTransform } from './executeScript'
 import { registerExtensionCommand } from 'vscode-framework'
 import codeFixes from './codeFixes'
 import playgroundCommands from './playgroundCommands'
@@ -29,7 +29,8 @@ export const activate = () => {
     apiCommands()
 
     const api = {
-        esbuildBundle,
+        bundle: esbuildBundle,
+        transform: esbuildTransform,
     }
     return {
         esbuild: initialEsbuildInstalledCheck.value ? api : esbuildInstallPromise.promise.then(() => api),
