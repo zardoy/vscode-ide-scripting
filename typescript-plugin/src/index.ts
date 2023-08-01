@@ -19,7 +19,6 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             // don't add globals such as code to untitled and other inferred/full projects
             let ourFileRoot: string | undefined
             for (const openedFile of openedFiles) {
-                // TODO inspectpostf
                 const beforeRootIdx = openedFile.indexOf('/^/idescripting.playground/')
                 if (beforeRootIdx === -1) continue
                 ourFileRoot = openedFile.slice(0, beforeRootIdx)

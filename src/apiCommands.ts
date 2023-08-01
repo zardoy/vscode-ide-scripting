@@ -5,6 +5,7 @@ import { doParse } from './apiCommandsParser'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import { oneOf } from '@zardoy/utils'
 import { join } from 'path'
+import { SCHEME } from './fileSystem'
 
 declare const __API_COMMANDS: string
 
@@ -55,8 +56,13 @@ export default () => {
                                     return
                                 }
                                 const command = commands.find(({ id }) => id === button.item.value)!
+                                if (editor.document.uri.scheme === SCHEME) {
+                                    editor.insertSnippet(new vscode.SnippetString().appendText(command.id))
+                                    return
+                                }
+
                                 const snippet = new vscode.SnippetString()
-                                snippet.appendText(`command('${command.id}'`)
+                                snippet.appendText(`vscode.commands.executeCommand<${command.output}>('${command.id}'`)
                                 for (const arg of command.args) {
                                     snippet.appendText(', ')
                                     snippet.appendPlaceholder(arg.name + (arg.optional ? '?' : '' + ': ') + arg.typeStringified)

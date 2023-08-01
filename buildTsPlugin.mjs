@@ -21,8 +21,23 @@ await buildTsPlugin('typescript-plugin', undefined, undefined, {
                 })
                 build.onLoad({ filter: /.*/, namespace: 'GLOBAL_API_CONTENT' }, () => {
                     const contents = readFileSync('./typescript-plugin/globalApiTypes.ts', 'utf-8')
+                    /** @type {import('./src/apiCommandsParser').CommandsType} */
+                    const builtinCommands = JSON.parse(readFileSync('./out/api-commands.json', 'utf-8'))
+                    const commandsObj = builtinCommands
+                        .map(command => {
+                            const paramsDescriptions = command.args
+                                .map(arg => arg.description && `* @param ${arg.name} ${arg.description}`)
+                                .filter(Boolean)
+                                .join('\n')
+                            let string = `/**\n * ${command.description}\n ${paramsDescriptions} */\n`
+                            string += `'${command.id}': [${command.output}, ${command.args
+                                .map(arg => `${arg.name}${arg.optional ? '?' : ''}: ${arg.typeStringified}`)
+                                .join(', ')}]`
+                            return string
+                        })
+                        .join('\n')
                     return {
-                        contents,
+                        contents: contents.replace('/* GENERATED BUILTIN COMMANDS GO HERE */', commandsObj),
                         loader: 'text',
                     }
                 })

@@ -3,8 +3,6 @@ import { SCHEME } from './fileSystem'
 import { getExtensionContributionsPrefix } from 'vscode-framework'
 
 export default () => {
-    const APPLY_REFACTOR_COMMAND = `_${getExtensionContributionsPrefix()}applyRefactor`
-
     const makeRequest = async (doc: vscode.TextDocument, pos: vscode.Position, req: string) => {
         const { uri } = doc
         const response = await vscode.commands
@@ -41,6 +39,12 @@ export default () => {
                         refactor.actions.map(
                             action =>
                                 ({
+                                    __data: {
+                                        document,
+                                        position: pos,
+                                        endOffset,
+                                        action: `${refactor.name},${action.name}`,
+                                    },
                                     title: action.description,
                                     kind: action.kind ? vscode.CodeActionKind.Empty.append(action.kind) : undefined,
                                     disabled: action.notApplicableReason
@@ -48,11 +52,6 @@ export default () => {
                                               reason: action.notApplicableReason,
                                           }
                                         : undefined,
-                                    command: {
-                                        title: '',
-                                        command: APPLY_REFACTOR_COMMAND,
-                                        arguments: [{ document, position: pos, endOffset, action: `${refactor.name},${action.name}` }],
-                                    },
                                 } as vscode.CodeAction),
                         ),
                     ),
@@ -62,19 +61,26 @@ export default () => {
                     })),
                 ]
             },
+            async resolveCodeAction(codeAction, token) {
+                const { document: doc, position: pos, endOffset, action } = (codeAction as any).__data
+                const response: import('typescript').RefactorEditInfo | undefined = await makeRequest(
+                    doc,
+                    pos,
+                    `scripting-resolve-code-actions:${endOffset},${action}`,
+                )
+                if (!response) return
+                codeAction.edit = textFileChangesToWorkspaceEdit(doc, response.edits)
+                if (response.renameLocation !== undefined) {
+                    codeAction.command = {
+                        title: '',
+                        command: 'editor.action.rename',
+                        arguments: [[vscode.Uri.parse(doc.uri), doc.positionAt(response.renameLocation)]],
+                    }
+                }
+                return codeAction
+            },
         },
     )
-
-    vscode.commands.registerCommand(APPLY_REFACTOR_COMMAND, async data => {
-        if (!data) return
-        const { document: doc, position: pos, endOffset, action } = data
-        const response: import('typescript').RefactorEditInfo | undefined = await makeRequest(doc, pos, `scripting-resolve-code-actions:${endOffset},${action}`)
-        if (!response) return
-        await vscode.workspace.applyEdit(textFileChangesToWorkspaceEdit(doc, response.edits))
-        if (response.renameLocation !== undefined) {
-            await vscode.commands.executeCommand('editor.action.rename', [vscode.Uri.parse(doc.uri), doc.positionAt(response.renameLocation)])
-        }
-    })
 
     // workaround
     vscode.languages.registerRenameProvider(

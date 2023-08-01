@@ -9,7 +9,7 @@ export default () => {
             async provideCompletionItems(document, position, token, context) {
                 if (document.uri.scheme !== SCHEME) return
                 const commandRange = document.getWordRangeAtPosition(position, /command\((['"].*['"]?|)\)/)
-                const stringRange = document.getWordRangeAtPosition(position, /['"][\d\w-]*['"]/i)
+                const stringRange = document.getWordRangeAtPosition(position, /['"][\.\d\w-]*['"]/i)
                 const innerStringRange = stringRange?.with(stringRange.start.translate(0, 1), stringRange.end.translate(0, -1))
                 if (!commandRange || !innerStringRange?.contains(position)) return
                 if (position.character < commandRange.start.character + 'command("'.length) return

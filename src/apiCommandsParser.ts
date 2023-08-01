@@ -5,6 +5,19 @@ import type { ArrayLiteralExpression, CallExpression, Identifier, NewExpression,
 
 export type ArgType = 'uri' | 'pos' | 'range' | 'formattingOptions' | 'triggerCharacter'
 
+type ArgsOutput = {
+    name: string
+    description: string
+    optional: boolean
+    typeStringified: string
+}
+export type CommandsType = {
+    id: string
+    description: string
+    args: ArgsOutput[]
+    output: string
+}[]
+
 const knownApiArgumentTypes = ['Uri', 'Position', 'Range', 'CallHierarchyItem', 'String', 'Number', 'Void', 'TypeHierarchyItem', 'TestItem'] as const
 
 const typeToTypeStringMap: Record<(typeof knownApiArgumentTypes)[number], string> = {
@@ -31,7 +44,7 @@ let ts: typeof import('typescript')
 
 export const doParse = async (_ts: typeof import('typescript')) => {
     ts = _ts
-    body ??= await got('https://raw.githubusercontent.com/zardoy/vscode/main/src/vs/workbench/api/common/extHostApiCommands.ts').then(res => res.body)
+    body ??= await got('https://raw.githubusercontent.com/microsoft/vscode/main/src/vs/workbench/api/common/extHostApiCommands.ts').then(res => res.body)
     const sourceFile = ts.createSourceFile('fileName.ts', body, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS)
     // select const with name newCommands
     let newCommands: ArrayLiteralExpression | undefined
@@ -51,18 +64,7 @@ export const doParse = async (_ts: typeof import('typescript')) => {
     })
     if (!newCommands) throw new Error('newCommands not found')
 
-    type ArgsOutput = {
-        name: string
-        description: string
-        optional: boolean
-        typeStringified: string
-    }
-    const commands: {
-        id: string
-        description: string
-        args: ArgsOutput[]
-        output: string
-    }[] = []
+    const commands: CommandsType = []
     newCommands.elements.forEach(element => {
         if (!ts.isNewExpression(element)) return
         if (element.arguments?.length !== 5) return
@@ -135,13 +137,13 @@ export const doParse = async (_ts: typeof import('typescript')) => {
     //             .filter(Boolean)
     //             .join('\n')
     //         let string = `/**\n * ${command.description}\n ${paramsDescriptions} */\n`
-    //         string += `executeCommand(id: '${command.id}', ${command.args
+    //         string += `'${command.id}': [${command.output}, ${command.args
     //             .map(arg => `${arg.name}${arg.optional ? '?' : ''}: ${arg.typeStringified}`)
-    //             .join(', ')}): Promise<${command.output}>`
+    //             .join(', ')}]`
     //         return string
     //     })
     //     .join('\n')
-    // clipboard.writeSync(dts)
+    // require('clipboardy').default.writeSync(dts)
 
     return commands
 }
